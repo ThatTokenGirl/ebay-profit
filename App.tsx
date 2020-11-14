@@ -1,21 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+import React from "react";
+import { SafeAreaView, ScrollView, StyleSheet, View } from "react-native";
+import { Appbar, Provider as PaperProvider } from "react-native-paper";
+import { HomeView } from "./pages";
+import Constants from "expo-constants";
+import theme from "./theme";
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: Constants.statusBarHeight,
+  },
+
+  scrollContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
 });
+
+export default function App() {
+  return (
+    <PaperProvider theme={theme}>
+      <SafeAreaView style={styles.container}>
+        <Appbar>
+          <Appbar.Content title="Ebay Profit" />
+        </Appbar>
+
+        <View style={styles.scrollContainer}>
+          <HomeView></HomeView>
+        </View>
+      </SafeAreaView>
+    </PaperProvider>
+  );
+}
