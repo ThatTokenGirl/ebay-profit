@@ -1,17 +1,17 @@
-import NetInfo from "@react-native-community/netinfo";
 import {
   BackendConfig,
   HttpRequest,
   HttpResponse,
   Middleware,
 } from "./+helpers/+types";
+import Axios from "axios";
 
 const defaultRequester = async (req: HttpRequest): Promise<HttpResponse> => {
   const headers = new Headers();
 
-  if (req.contentType) {
-    headers.append("Content-Type", req.contentType);
-  } //else headers.append("Content-Type", "application/json");
+  if (req.headers && !req.headers["Content-Type"]) {
+    headers.set("Content-Type", "application/json");
+  }
 
   if (req.headers) {
     Object.entries(req.headers).forEach(([key, value]) => {
@@ -22,22 +22,18 @@ const defaultRequester = async (req: HttpRequest): Promise<HttpResponse> => {
   }
 
   try {
-    console.log("before request");
-    const res = await fetch(req.url, {
-      method: req.method,
-      headers,
-      body: req.body,
+    const res = await Axios({
+      method: req.method ?? "get",
+      url: req.url,
+      headers: req.headers,
+      data: req.body,
     });
-    console.log("after request");
 
-    const body =
-      res.headers.get("Content-Type") === "application/json"
-        ? await res.json()
-        : await res.text();
+    const body = res.data;
 
     return {
-      url: res.url,
-      contentType: res.headers.get("Content-Type") || undefined,
+      url: res.config.url ?? "",
+      contentType: res.headers["Content-Type"] || undefined,
       status: res.status,
       statusText: res.statusText,
       body,

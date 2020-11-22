@@ -43,7 +43,13 @@ export default function application_auth<Args extends any[]>(
         }),
       });
 
-      let res = await makeRequest(req);
+      let res = await new Promise<HttpResponse>((resolve, reject) => {
+        setTimeout(() => {
+          makeRequest(req)
+            .then((res) => resolve(res))
+            .catch((err) => reject(err));
+        }, 0);
+      });
 
       if (res.status === 401) {
         tokenResponse = await tokenRequest(true);

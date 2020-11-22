@@ -3,7 +3,6 @@ export type HttpRequest = {
   readonly url: string;
   readonly method: "GET" | "POST" | "PUT" | "DELETE";
   readonly body?: any;
-  readonly contentType?: string;
   readonly headers?: HttpHeaders;
 };
 

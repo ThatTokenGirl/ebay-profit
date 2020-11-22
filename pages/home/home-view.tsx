@@ -113,7 +113,10 @@ export default function HomeView() {
 
         merge({ ebayData });
       })
-      .catch((ex) => logger.log("error", ex))
+      .catch((ex) => {
+        logger.log("error", ex);
+        alert("Ebay search failed, please try again");
+      })
       .finally(() => dispatch(endLoading()));
   };
 

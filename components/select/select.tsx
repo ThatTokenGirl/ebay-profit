@@ -56,7 +56,6 @@ export default function Select(props: SelectProps) {
               error={props.error}
               mode={props.mode}
               label={props.label}
-              style={{ marginVertical: 8 }}
               onChangeText={undefined}
               editable={false}
               value={selected && displayer(selected)}
