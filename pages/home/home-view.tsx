@@ -1,21 +1,15 @@
 import { BarCodeEvent } from "expo-barcode-scanner";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { ScrollView, StyleSheet, Vibration } from "react-native";
-import {
-  Button,
-  Card,
-  DataTable,
-  Headline,
-  Paragraph,
-  Text,
-} from "react-native-paper";
+import { Button, Card, DataTable, Headline } from "react-native-paper";
 import { useDispatch } from "react-redux";
 import { Ebay, SORT } from "../../backend";
-import { BarcodeScanner } from "../../components";
+import { BarcodeScanner, Select, Option } from "../../components";
 import { logger } from "../../logging.config";
 import { endLoading, startLoading } from "../../store";
-import { CategoryFeeSelect, MoneyInput } from "./components";
-import { CategoryFee } from "./components/category-fee-select";
+import { MoneyInput } from "./components";
+import categories, { EbayCategory } from "../../assets/categories";
+import { determineFee } from "../../assets/fees";
 
 const styles = StyleSheet.create({
   container: {
@@ -30,9 +24,8 @@ const styles = StyleSheet.create({
 type HomeViewState = {
   packaging: number;
   shipping: number;
-  ebayCategory?: CategoryFee;
   itemPrice: number;
-
+  selectedCategories: EbayCategory[];
   ebayData?: {
     itemFound: boolean;
     medianPrice: number;
@@ -46,12 +39,50 @@ export default function HomeView() {
     packaging: 0,
     shipping: 0,
     itemPrice: 0,
+    selectedCategories: [],
   });
   const [scanning, setScanning] = useState(false);
 
   const merge = (partial: Partial<HomeViewState>) => {
     setData({ ...data, ...partial });
   };
+
+  const categoryDisplay = (e: EbayCategory) =>
+    `${e.name}${!!e.children ? " >" : ""}`;
+
+  const selectCategory = (e: EbayCategory, index: number) => {
+    const selectedCategories = data.selectedCategories.filter(
+      (_, i) => i < index
+    );
+    selectedCategories.push(e);
+    merge({ selectedCategories });
+  };
+
+  const ebayFeePercent = useMemo(() => {
+    const categories = data.selectedCategories.map((x) => x.name);
+    const sellingPrice = data.ebayData?.medianPrice ?? 0;
+
+    return determineFee({ sellingPrice }, categories);
+  }, [data.selectedCategories, data.ebayData]);
+
+  const ebayFee = useMemo(() => {
+    return (ebayFeePercent * (data.ebayData?.medianPrice ?? 0)) / 100;
+  }, [ebayFeePercent, data.ebayData]);
+
+  const paypalFee = useMemo(() => {
+    return (data.ebayData?.medianPrice ?? 0) * 0.029 + 0.3;
+  }, [data.ebayData]);
+
+  const potentialProfit = useMemo(() => {
+    return (
+      (data.ebayData?.medianPrice ?? 0) -
+      data.itemPrice -
+      data.packaging -
+      data.shipping -
+      ebayFee -
+      paypalFee
+    );
+  }, [ebayFee, data, data.ebayData]);
 
   const handleScan = ({ data }: BarCodeEvent) => {
     Vibration.vibrate();
@@ -104,17 +135,42 @@ export default function HomeView() {
           }
         />
         <MoneyInput
-          label="Item price"
+          label="Item cost"
           style={styles.row}
           onChange={({ nativeEvent }) =>
             merge({ itemPrice: parseFloat(nativeEvent.text) })
           }
         />
-        <CategoryFeeSelect
+
+        <Select
           label="Ebay category"
+          mode="outlined"
+          display={categoryDisplay}
+          onSelect={(e) => selectCategory(e, 0)}
           style={styles.row}
-          onChange={(ebayFees) => merge({ ebayCategory: ebayFees })}
-        />
+        >
+          {categories.map((c) => (
+            <Option key={c.id} value={c} />
+          ))}
+        </Select>
+
+        {data.selectedCategories
+          .filter((c) => !!c.children)
+          .map((c, index) => (
+            <Select
+              key={c.id}
+              mode="outlined"
+              label={categoryDisplay(c)}
+              display={categoryDisplay}
+              onSelect={(e) => selectCategory(e, index + 1)}
+              style={styles.row}
+            >
+              {c.children!.map((c) => (
+                <Option key={c.id} value={c} />
+              ))}
+            </Select>
+          ))}
+
         {data.ebayData && (
           <Card style={styles.row}>
             {data.ebayData.itemFound ? (
@@ -123,7 +179,51 @@ export default function HomeView() {
                   <DataTable.Row>
                     <DataTable.Cell>Median price</DataTable.Cell>
                     <DataTable.Cell numeric>
-                      {data.ebayData.medianPrice}
+                      {displayPrice(data.ebayData.medianPrice)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>Package cost</DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      -{displayPrice(data.packaging)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>Shipping cost</DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      -{displayPrice(data.shipping)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>Item cost</DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      -{displayPrice(data.itemPrice)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>
+                      Ebay Fee ({ebayFeePercent}%)
+                    </DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      -{displayPrice(ebayFee)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>Paypal Fee</DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      -{displayPrice(paypalFee)}
+                    </DataTable.Cell>
+                  </DataTable.Row>
+
+                  <DataTable.Row>
+                    <DataTable.Cell>Potential Profit</DataTable.Cell>
+                    <DataTable.Cell numeric>
+                      {displayPrice(potentialProfit)}
                     </DataTable.Cell>
                   </DataTable.Row>
                 </DataTable>
@@ -180,4 +280,8 @@ function findMedian_Selector(items: number[], lookFor: number): number {
       greater,
       lookFor - lesser.length - pivots.length
     );
+}
+
+function displayPrice(value: number) {
+  return `$${value.toFixed(2)}`;
 }

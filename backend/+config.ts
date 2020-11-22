@@ -1,3 +1,4 @@
+import NetInfo from "@react-native-community/netinfo";
 import {
   BackendConfig,
   HttpRequest,
@@ -10,7 +11,7 @@ const defaultRequester = async (req: HttpRequest): Promise<HttpResponse> => {
 
   if (req.contentType) {
     headers.append("Content-Type", req.contentType);
-  }
+  } //else headers.append("Content-Type", "application/json");
 
   if (req.headers) {
     Object.entries(req.headers).forEach(([key, value]) => {
@@ -21,11 +22,13 @@ const defaultRequester = async (req: HttpRequest): Promise<HttpResponse> => {
   }
 
   try {
+    console.log("before request");
     const res = await fetch(req.url, {
       method: req.method,
       headers,
       body: req.body,
     });
+    console.log("after request");
 
     const body =
       res.headers.get("Content-Type") === "application/json"
@@ -40,6 +43,7 @@ const defaultRequester = async (req: HttpRequest): Promise<HttpResponse> => {
       body,
     };
   } catch (ex) {
+    console.log("default requester error");
     console.log(ex);
     throw ex;
   }

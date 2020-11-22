@@ -175,7 +175,7 @@ const search_request = application_auth((request: SearchRequest) => {
     url += `filter=${request.filters.reduce(
       (acc, current, index) => `${acc}${index ? "," : ""}${current}`,
       ""
-    )}`;
+    )}&`;
 
   if (request.sort) url += `sort=${request.sort}`;
 

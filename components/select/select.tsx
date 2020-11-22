@@ -1,5 +1,5 @@
 import React, { ReactElement, useState } from "react";
-import { StyleProp, TouchableOpacity, View, ViewProps } from "react-native";
+import { StyleProp, TextStyle, TouchableOpacity, View } from "react-native";
 import { List, Menu, TextInput } from "react-native-paper";
 import { SelectContext } from "./context";
 import { OptionProps } from "./option";
@@ -12,7 +12,7 @@ type SelectPropsChild =
 type SelectProps = {
   mode?: "flat" | "outlined";
   label?: string;
-  style?: StyleProp<ViewProps>;
+  style?: StyleProp<TextStyle>;
   disabled?: boolean;
   error?: boolean;
   display?: (value: any) => string;
