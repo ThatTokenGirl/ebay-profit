@@ -12,6 +12,7 @@
     "@material-ui/icons": "^4.9.1",
     "@react-native-community/netinfo": "5.9.6",
     "@reduxjs/toolkit": "^1.4.0",
+    "@thattokengirl-utilities/http": "^1.0.5",
     "axios": "^0.21.0",
     "expo": "~39.0.2",
     "expo-barcode-scanner": "~9.0.0",

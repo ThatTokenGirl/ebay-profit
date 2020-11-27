@@ -1,10 +1,15 @@
+import {
+  HttpRequest,
+  HttpResponse,
+  logging,
+} from "@thattokengirl-utilities/http";
 import { logger as loggerFactory } from "react-native-logs";
-import { HttpRequest, HttpResponse, loggingMiddlewareFactory } from "./backend";
 
 export const logger = loggerFactory.createLogger();
-export const backendLoggerMiddleware = loggingMiddlewareFactory({
+export const backendLoggerMiddleware = logging({
   requestLogger,
   responseLogger,
+  errorLogger,
 });
 
 function requestLogger(req: HttpRequest) {
@@ -35,6 +40,10 @@ ${formatBody(res.body)}
 `;
 
   logger.log("debug", str);
+}
+
+function errorLogger(req: HttpRequest, err: any) {
+  console.error(err);
 }
 
 function formatBody(body: any) {
